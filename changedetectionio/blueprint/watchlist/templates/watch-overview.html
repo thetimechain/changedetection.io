@@ -4,6 +4,7 @@
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
+<script src="{{url_for('static_content', group='js', filename='inline-edit.js')}}" defer></script>
 <script>let nowtimeserver={{ now_time_server }};</script>
 <script>let favicon_baseURL="{{ url_for('static_content', group='favicon', filename="PLACEHOLDER")}}";</script>
 <script>
@@ -50,7 +51,30 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
 {%- endif -%}
 {%- endfor -%}
 </style>
-<div class="box" id="form-quick-watch-add">
+{# ========================================================================
+   SIMPLE MODE: Simplified Quick Add Form
+   ======================================================================== #}
+<div class="box simple-only" id="form-quick-watch-add-simple">
+    <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add', tag=active_tag_uuid) }}" method="POST" id="new-watch-form-simple">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
+        <input type="hidden" name="processor" value="text_json_diff">
+        <fieldset>
+            <legend>{{ _('Watch a new page') }}</legend>
+            <div class="simple-add-wrapper">
+                {{ render_nolabel_field(form.url, placeholder="https://...", required=true) }}
+                <div class="simple-add-tag">
+                    {{ render_nolabel_field(form.tags, value=active_tag.title if active_tag_uuid else '', placeholder=_("Group (optional)")) }}
+                </div>
+                {{ render_nolabel_field(form.edit_and_watch_submit_button, title=_("Add & Configure") ) }}
+            </div>
+        </fieldset>
+    </form>
+</div>
+
+{# ========================================================================
+   ADVANCED MODE: Full Quick Add Form
+   ======================================================================== #}
+<div class="box advanced-only" id="form-quick-watch-add">
 
     <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add', tag=active_tag_uuid) }}" method="POST" id="new-watch-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
@@ -77,7 +101,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
     <form class="pure-form" action="{{ url_for('ui.form_watch_list_checkbox_operations') }}" method="POST" id="watch-list-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
     <input type="hidden" id="op_extradata" name="op_extradata" value="" >
-    <div id="checkbox-operations">
+    <div id="checkbox-operations" class="advanced-only">
         <button class="pure-button button-secondary button-xsmall"  name="op" value="pause"><i data-feather="pause" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Pause') }}</button>
         <button class="pure-button button-secondary button-xsmall"  name="op" value="unpause"><i data-feather="play" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('UnPause') }}</button>
         <button class="pure-button button-secondary button-xsmall"  name="op" value="mute"><i data-feather="volume-x" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Mute') }}</button>
@@ -112,7 +136,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
     {%- if search_q -%}<div id="search-result-info">{{ _('Searching') }} "<strong><i>{{search_q}}</i></strong>"</div>{%- endif -%}
 
     <!-- US-021: Advanced Filter Panel -->
-    <div id="filter-panel" class="filter-panel">
+    <div id="filter-panel" class="filter-panel advanced-only">
         <button type="button" id="filter-toggle" class="pure-button button-small filter-toggle">
             <i data-feather="filter" style="width: 14px; height: 14px; margin-right: 4px;"></i>{{ _('Filters') }}
             {%- if filter_tags or stock_status != 'all' or filter_form.date_from.data or filter_form.date_to.data -%}
@@ -211,6 +235,214 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
     {%- endfor -%}
     </div>
 
+    {# ========================================================================
+       SIMPLE MODE: Database-style Watch Table
+       ======================================================================== #}
+    {%- set ui_settings = datastore.data['settings']['application']['ui'] -%}
+    <div class="database-table-wrapper simple-only">
+        {%- if not watches|length -%}
+        <div class="simple-empty-state">
+            <p>{{ _('No watches yet. Add a URL above to start monitoring pages.') }}</p>
+        </div>
+        {%- else -%}
+        <table class="database-table pure-table" id="watch-database">
+            <thead>
+                <tr>
+                    <th class="col-select"><input type="checkbox" id="db-check-all" aria-label="{{ _('Select all watches') }}"></th>
+                    <th class="col-title">{{ _('Title / URL') }}</th>
+                    <th class="col-status">{{ _('Status') }}</th>
+                    <th class="col-words">{{ _('Watch Words') }}</th>
+                    <th class="col-checked">{{ _('Last Checked') }}</th>
+                    <th class="col-interval">{{ _('Interval') }}</th>
+                    <th class="col-notify">{{ _('Notify') }}</th>
+                    <th class="col-tags">{{ _('Tags') }}</th>
+                    <th class="col-actions">{{ _('Actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {%- for watch in (watches|sort(attribute=sort_attribute or 'last_changed', reverse=(sort_order or 'asc') == 'asc'))|pagination_slice(skip=pagination.skip) -%}
+                {%- set favicon = watch.get_favicon_filename() -%}
+                {%- set has_error = watch.compile_error_texts()|length > 2 -%}
+                {%- set is_paused = watch.paused is defined and watch.paused != False -%}
+                {%- set has_unviewed = watch.has_unviewed -%}
+                {%- set in_stock = watch.has_restock_info and watch['restock']['in_stock'] -%}
+                {%- set not_in_stock = watch.has_restock_info and not watch['restock']['in_stock'] -%}
+                {%- set system_use_url_watchlist = ui_settings.get('use_page_title_in_list') -%}
+                {%- set block_words = watch.get('block_words', []) -%}
+                {%- set trigger_words = watch.get('trigger_words', []) -%}
+
+                {%- set row_classes = [
+                    'has-error' if has_error else '',
+                    'paused' if is_paused else '',
+                    'unviewed' if has_unviewed else '',
+                    'in-stock' if in_stock else '',
+                    'not-in-stock' if not_in_stock else '',
+                    'notification_muted' if watch.notification_muted else '',
+                ] -%}
+
+                <tr class="db-watch-row {{ row_classes | reject('equalto', '') | join(' ') }}"
+                    data-watch-uuid="{{ watch.uuid }}"
+                    data-watch-title="{{ watch.get('title') or '' }}"
+                    data-block-words="{{ block_words | join('\n') }}"
+                    data-trigger-words="{{ trigger_words | join('\n') }}"
+                    data-interval-use-default="{{ 'true' if watch.get('time_between_check_use_default', True) else 'false' }}"
+                    data-interval-weeks="{{ watch.get('time_between_check', {}).get('weeks') or 0 }}"
+                    data-interval-days="{{ watch.get('time_between_check', {}).get('days') or 0 }}"
+                    data-interval-hours="{{ watch.get('time_between_check', {}).get('hours') or 0 }}"
+                    data-interval-minutes="{{ watch.get('time_between_check', {}).get('minutes') or 0 }}"
+                    data-interval-seconds="{{ watch.get('time_between_check', {}).get('seconds') or 0 }}"
+                    data-tags="{{ watch.get('tags', []) | join(',') }}">
+
+                    <td class="col-select">
+                        <input type="checkbox" name="uuids" value="{{ watch.uuid }}" aria-label="{{ _('Select') }} {{ watch.label | truncate(30) }}">
+                    </td>
+
+                    <td class="col-title">
+                        <div class="title-cell">
+                            {% if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] %}
+                            <img alt="" class="db-favicon" loading="lazy"
+                                {% if favicon %}src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}"
+                                {% else %}src='data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"%3E%3Ccircle cx="12" cy="12" r="10" stroke="%23e1e1e1" stroke-width="1.5" fill="none" opacity="0.5"/%3E%3C/svg%3E'{% endif %}>
+                            {% endif %}
+                            <div class="title-content">
+                                <span class="editable-cell title-editable" data-field="title" title="{{ _('Click to edit') }}" role="button" tabindex="0" aria-label="{{ _('Edit title') }}">
+                                    <span class="title-text">
+                                        {% if system_use_url_watchlist or watch.get('use_page_title_in_list') %}
+                                            {{ watch.label | truncate(45) }}
+                                        {% else %}
+                                            {{ (watch.get('title') or watch.link) | truncate(45) }}
+                                        {% endif %}
+                                    </span>
+                                    <span class="edit-icon" title="{{ _('Edit title') }}">&#9998;</span>
+                                </span>
+                                <div class="url-preview" title="{{ watch.link }}">{{ watch.link | truncate(60) }}</div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td class="col-status">
+                        <div class="status-cell">
+                            {%- if has_error -%}
+                            <span class="status-dot status-error" title="{{ _('Error') }}"></span>
+                            <span class="status-text">{{ _('Error') }}</span>
+                            {%- elif is_paused -%}
+                            <span class="status-dot status-paused" title="{{ _('Paused') }}"></span>
+                            <span class="status-text">{{ _('Paused') }}</span>
+                            {%- elif has_unviewed -%}
+                            <span class="status-dot status-changed" title="{{ _('Changed!') }}"></span>
+                            <span class="status-text">{{ _('Changed') }}</span>
+                            {%- elif not_in_stock -%}
+                            <span class="status-dot status-soldout" title="{{ _('Sold Out') }}"></span>
+                            <span class="status-text">{{ _('Sold Out') }}</span>
+                            {%- elif in_stock -%}
+                            <span class="status-dot status-ok" title="{{ _('Available') }}"></span>
+                            <span class="status-text">{{ _('In Stock') }}</span>
+                            {%- else -%}
+                            <span class="status-dot status-ok" title="{{ _('OK') }}"></span>
+                            <span class="status-text">{{ _('OK') }}</span>
+                            {%- endif -%}
+                            <button class="pause-btn ajax-op" data-op="{{ 'unpause' if is_paused else 'pause' }}" title="{{ _('Unpause') if is_paused else _('Pause') }}" aria-label="{{ _('Unpause watch') if is_paused else _('Pause watch') }}">
+                                {{ '&#9654;' if is_paused else '&#10074;&#10074;' | safe }}
+                            </button>
+                        </div>
+                    </td>
+
+                    <td class="col-words">
+                        <span class="editable-cell words-editable" data-field="watch_words" title="{{ _('Click to edit watch words') }}" role="button" tabindex="0" aria-label="{{ _('Edit watch words') }}">
+                            <span class="words-summary">
+                                {%- if block_words|length or trigger_words|length -%}
+                                <span class="block-count" title="{{ _('Block words (notify when disappear)') }}">{{ block_words|length }} block</span>
+                                <span class="words-sep">/</span>
+                                <span class="trigger-count" title="{{ _('Trigger words (notify when appear)') }}">{{ trigger_words|length }} trig</span>
+                                {%- else -%}
+                                <span class="no-words">{{ _('None') }}</span>
+                                {%- endif -%}
+                            </span>
+                            <span class="edit-icon" title="{{ _('Edit watch words') }}">&#9998;</span>
+                        </span>
+                    </td>
+
+                    <td class="col-checked" title="{{ watch.last_checked | timestamp_to_datetime if watch.last_checked else '' }}">
+                        {%- if watch.last_checked > 0 -%}
+                        {{ watch | format_last_checked_time | safe }}
+                        {%- else -%}
+                        <span class="not-checked">{{ _('Never') }}</span>
+                        {%- endif -%}
+                    </td>
+
+                    <td class="col-interval">
+                        <span class="editable-cell interval-editable" data-field="time_between_check" title="{{ _('Click to edit check interval') }}" role="button" tabindex="0" aria-label="{{ _('Edit check interval') }}">
+                            <span class="interval-text">
+                                {%- if watch.get('time_between_check_use_default', True) -%}
+                                <span class="interval-default">{{ _('Default') }}</span>
+                                {%- else -%}
+                                    {%- set tbc = watch.get('time_between_check', {}) -%}
+                                    {%- set weeks = tbc.get('weeks') or 0 -%}
+                                    {%- set days = tbc.get('days') or 0 -%}
+                                    {%- set hours = tbc.get('hours') or 0 -%}
+                                    {%- set minutes = tbc.get('minutes') or 0 -%}
+                                    {%- set seconds = tbc.get('seconds') or 0 -%}
+                                    {%- if weeks > 0 -%}{{ weeks }}w
+                                    {%- elif days > 0 -%}{{ days }}d
+                                    {%- elif hours > 0 -%}{{ hours }}h
+                                    {%- elif minutes > 0 -%}{{ minutes }}m
+                                    {%- elif seconds > 0 -%}{{ seconds }}s
+                                    {%- else -%}{{ _('Default') }}
+                                    {%- endif -%}
+                                {%- endif -%}
+                            </span>
+                            <span class="edit-icon" title="{{ _('Edit interval') }}">&#9998;</span>
+                        </span>
+                    </td>
+
+                    <td class="col-notify">
+                        <button class="notify-btn ajax-op" data-op="{{ 'unmute' if watch.notification_muted else 'mute' }}"
+                                title="{{ _('Unmute notifications') if watch.notification_muted else _('Mute notifications') }}"
+                                aria-label="{{ _('Unmute notifications') if watch.notification_muted else _('Mute notifications') }}">
+                            {%- if watch.notification_muted -%}
+                            <span class="notify-muted">&#128277;</span>
+                            {%- else -%}
+                            <span class="notify-active">&#128276;</span>
+                            {%- endif -%}
+                        </button>
+                    </td>
+
+                    <td class="col-tags">
+                        <span class="editable-cell tags-editable" data-field="tags" title="{{ _('Click to edit tags') }}" role="button" tabindex="0" aria-label="{{ _('Edit tags') }}">
+                            <span class="tags-list">
+                                {%- set watch_tags = datastore.get_all_tags_for_watch(watch['uuid']) -%}
+                                {%- if watch_tags -%}
+                                    {%- for watch_tag_uuid, watch_tag in watch_tags.items() -%}
+                                    <span class="db-tag-badge tag-{{ watch_tag.title|sanitize_tag_class }}">{{ watch_tag.title | truncate(12) }}</span>
+                                    {%- endfor -%}
+                                {%- else -%}
+                                <span class="no-tags">-</span>
+                                {%- endif -%}
+                            </span>
+                            <span class="edit-icon" title="{{ _('Edit tags') }}">&#9998;</span>
+                        </span>
+                    </td>
+
+                    <td class="col-actions">
+                        <div class="action-buttons">
+                            <a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}" class="action-btn" title="{{ _('Edit full settings') }}" aria-label="{{ _('Edit full settings') }}">&#9881;</a>
+                            {%- if watch.history_n >= 2 -%}
+                            <a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=watch.uuid)}}" class="action-btn" title="{{ _('View changes') }}" aria-label="{{ _('View changes') }}">&#128065;</a>
+                            {%- else -%}
+                            <a href="{{ url_for('ui.ui_preview.preview_page', uuid=watch.uuid)}}" class="action-btn" title="{{ _('Preview') }}" aria-label="{{ _('Preview') }}">&#128065;</a>
+                            {%- endif -%}
+                        </div>
+                    </td>
+                </tr>
+            {%- endfor -%}
+            </tbody>
+        </table>
+        {%- endif -%}
+    </div>
+
+    {# ========================================================================
+       ADVANCED MODE: Table-based Watch List
+       ======================================================================== #}
     {%- set sort_order = sort_order or 'asc' -%}
     {%- set sort_attribute = sort_attribute or 'last_changed'  -%}
     {%- set pagination_page = request.args.get('page', 0) -%}
@@ -223,6 +455,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
     {%- set wrapper_classes = [
         'has-unread-changes' if unread_changes_count else '',
         'has-error' if errored_count else '',
+        'advanced-only',
     ] -%}
     <div id="watch-table-wrapper" class="{{ wrapper_classes | reject('equalto', '') | join(' ') }}">
         {%- set table_classes = [

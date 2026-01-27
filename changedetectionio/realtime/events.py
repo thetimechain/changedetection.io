@@ -12,20 +12,20 @@ def register_watch_operation_handlers(socketio, datastore):
         try:
             op = data.get('op')
             uuid = data.get('uuid')
-            
+
             logger.debug(f"Socket.IO: Received watch operation '{op}' for UUID {uuid}")
-            
+
             if not op or not uuid:
                 emit('operation_result', {'success': False, 'error': 'Missing operation or UUID'})
                 return
-            
+
             # Check if watch exists
             if not datastore.data['watching'].get(uuid):
                 emit('operation_result', {'success': False, 'error': 'Watch not found'})
                 return
-            
+
             watch = datastore.data['watching'][uuid]
-            
+
             # Perform the operation
             if op == 'pause':
                 watch.toggle_pause()
@@ -38,21 +38,74 @@ def register_watch_operation_handlers(socketio, datastore):
                 from changedetectionio.flask_app import update_q
                 from changedetectionio import queuedWatchMetaData
                 from changedetectionio import worker_handler
-                
+
                 worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
                 logger.info(f"Socket.IO: Queued recheck for watch {uuid}")
             else:
                 emit('operation_result', {'success': False, 'error': f'Unknown operation: {op}'})
                 return
-            
+
             # Send signal to update UI
             watch_check_update = signal('watch_check_update')
             if watch_check_update:
                 watch_check_update.send(watch_uuid=uuid)
-            
+
             # Send success response to client
             emit('operation_result', {'success': True, 'operation': op, 'uuid': uuid})
-            
+
         except Exception as e:
             logger.error(f"Socket.IO error in handle_watch_operation: {str(e)}")
             emit('operation_result', {'success': False, 'error': str(e)})
+
+    @socketio.on('watch_update')
+    def handle_watch_update(data):
+        """Handle inline watch field updates via Socket.IO"""
+        try:
+            uuid = data.get('uuid')
+            updates = data.get('updates', {})
+
+            logger.debug(f"Socket.IO: Received watch update for UUID {uuid}: {updates}")
+
+            if not uuid:
+                emit('update_result', {'success': False, 'error': 'Missing UUID'})
+                return
+
+            if not updates:
+                emit('update_result', {'success': False, 'error': 'No updates provided'})
+                return
+
+            # Check if watch exists
+            if not datastore.data['watching'].get(uuid):
+                emit('update_result', {'success': False, 'error': 'Watch not found'})
+                return
+
+            watch = datastore.data['watching'][uuid]
+
+            # Allowed fields for inline editing
+            allowed_fields = {
+                'title', 'block_words', 'trigger_words', 'tags',
+                'time_between_check', 'time_between_check_use_default'
+            }
+
+            # Filter to only allowed fields
+            safe_updates = {k: v for k, v in updates.items() if k in allowed_fields}
+
+            if not safe_updates:
+                emit('update_result', {'success': False, 'error': 'No valid fields to update'})
+                return
+
+            # Apply updates
+            watch.update(safe_updates)
+            logger.info(f"Socket.IO: Updated watch {uuid} with: {list(safe_updates.keys())}")
+
+            # Send signal to update UI
+            watch_check_update = signal('watch_check_update')
+            if watch_check_update:
+                watch_check_update.send(watch_uuid=uuid)
+
+            # Send success response to client
+            emit('update_result', {'success': True, 'uuid': uuid, 'updated_fields': list(safe_updates.keys())})
+
+        except Exception as e:
+            logger.error(f"Socket.IO error in handle_watch_update: {str(e)}")
+            emit('update_result', {'success': False, 'error': str(e)})

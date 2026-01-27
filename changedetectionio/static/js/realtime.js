@@ -90,6 +90,9 @@ $(document).ready(function () {
                 reconnectionAttempts: 25
             });
 
+            // Expose socket globally for inline-edit.js and other scripts
+            window.watchSocket = socket;
+
             // Connection status logging
             socket.on('connect', function () {
                 $('#realtime-conn-error').hide();

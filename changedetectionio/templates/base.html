@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='pure-min.css')}}" >
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='flag-icons.min.css')}}" >
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}?v={{ get_css_version() }}" >
+    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='simple-mode.css')}}?v={{ get_css_version() }}" >
     {% if extra_stylesheets %}
       {% for m in extra_stylesheets %}
         <link rel="stylesheet" href="{{ m }}?ver={{ get_css_version() }}" >
@@ -47,7 +48,7 @@
     {% endif %}
   </head>
 
-  <body class="{{extra_classes}}">
+  <body class="{{extra_classes}} mode-{{ ui_mode|default('simple') }}">
     <div class="header">
     <div {% if pure_menu_fixed != False %}class="pure-menu-fixed"{% endif %} style="width: 100%;">
       <div class="home-menu pure-menu pure-menu-horizontal" id="nav-menu">
