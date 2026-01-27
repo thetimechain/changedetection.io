@@ -284,6 +284,7 @@ def main():
 
     @app.context_processor
     def inject_template_globals():
+        from flask import session
         # Get UI mode from session, default to 'simple' for new users
         ui_mode = session.get('ui_mode', 'simple')
         return dict(right_sticky="v{}".format(datastore.data['version_tag']),
