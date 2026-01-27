@@ -91,6 +91,37 @@
     <a id="jump-next-diff" title="{{ _('Jump to next difference') }}">{{ _('Jump') }}</a>
 </div>
 
+<!-- Watch Info Header -->
+{% if watch_a.get('artist') or watch_a.get('venue') or watch_a.get('event_date') or watch_a.get('block_words') or watch_a.get('trigger_words') %}
+<div class="watch-info-header">
+    {% if watch_a.get('artist') or watch_a.get('venue') or watch_a.get('event_date') %}
+    <div class="event-details">
+        <strong class="event-label">{{ _('Event Details') }}:</strong>
+        {% if watch_a.get('artist') %}<span class="event-value"><strong>{{ _('Artist') }}:</strong> {{ watch_a.get('artist') }}</span>{% endif %}
+        {% if watch_a.get('venue') %}<span class="event-value"><strong>{{ _('Venue') }}:</strong> {{ watch_a.get('venue') }}</span>{% endif %}
+        {% if watch_a.get('event_date') %}<span class="event-value"><strong>{{ _('Date') }}:</strong> {{ watch_a.get('event_date') }}</span>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if watch_a.get('block_words') or watch_a.get('trigger_words') %}
+    <div class="watch-words-display">
+        {% if watch_a.get('block_words') %}
+        <div class="block-words">
+            <strong>{{ _('Notify when DISAPPEARS') }}:</strong>
+            <span class="word-list">{{ watch_a.get('block_words') | join(', ') }}</span>
+        </div>
+        {% endif %}
+        {% if watch_a.get('trigger_words') %}
+        <div class="trigger-words">
+            <strong>{{ _('Notify when APPEARS') }}:</strong>
+            <span class="word-list">{{ watch_a.get('trigger_words') | join(', ') }}</span>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <div class="tabs">
     <ul>
