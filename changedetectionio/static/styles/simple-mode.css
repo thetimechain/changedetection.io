@@ -107,130 +107,573 @@ body.mode-simple .field-advanced {
 }
 
 /* ==========================================================================
-   Simple Mode - Card View (for future dashboard)
+   Simple Mode - Database Table View
    ========================================================================== */
 
-.simple-watch-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
+.database-table-wrapper {
     padding: 16px 0;
+    overflow-x: auto;
 }
 
-.simple-watch-card {
+.database-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
     background: var(--color-background-card, #fff);
     border: 1px solid var(--color-border, #e0e0e0);
     border-radius: 8px;
-    padding: 16px;
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    overflow: hidden;
 }
 
-.simple-watch-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
+.database-table thead {
+    background: var(--color-background-secondary, #f8f9fa);
 }
 
-.simple-watch-card .card-header {
+.database-table th {
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #666);
+    border-bottom: 2px solid var(--color-border, #e0e0e0);
+    white-space: nowrap;
+}
+
+.database-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-border-light, #f0f0f0);
+    vertical-align: middle;
+}
+
+.database-table tbody tr:hover {
+    background: var(--color-background-hover, #f8f9fa);
+}
+
+.database-table tbody tr.unviewed {
+    background: rgba(244, 67, 54, 0.05);
+}
+
+.database-table tbody tr.unviewed:hover {
+    background: rgba(244, 67, 54, 0.08);
+}
+
+.database-table tbody tr.paused {
+    opacity: 0.6;
+}
+
+.database-table tbody tr.has-error {
+    background: rgba(255, 152, 0, 0.05);
+}
+
+/* Column widths */
+.database-table .col-select { width: 40px; text-align: center; }
+.database-table .col-title { min-width: 200px; }
+.database-table .col-status { width: 100px; }
+.database-table .col-words { width: 120px; }
+.database-table .col-checked { width: 90px; }
+.database-table .col-interval { width: 80px; }
+.database-table .col-notify { width: 50px; text-align: center; }
+.database-table .col-tags { min-width: 100px; }
+.database-table .col-actions { width: 70px; }
+
+/* Title cell */
+.title-cell {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: 10px;
 }
 
-.simple-watch-card .card-favicon {
-    width: 32px;
-    height: 32px;
+.db-favicon {
+    width: 24px;
+    height: 24px;
     border-radius: 4px;
     object-fit: contain;
-    background: var(--color-background-muted, #f5f5f5);
+    flex-shrink: 0;
 }
 
-.simple-watch-card .card-title {
-    font-weight: 600;
-    font-size: 14px;
-    color: var(--color-text, #333);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.title-content {
+    min-width: 0;
     flex: 1;
 }
 
-.simple-watch-card .card-meta {
-    font-size: 12px;
-    color: var(--color-text-muted, #666);
-    margin-bottom: 12px;
+.title-text {
+    font-weight: 500;
+    color: var(--color-text, #333);
 }
 
-.simple-watch-card .card-status {
+.url-preview {
+    font-size: 11px;
+    color: var(--color-text-muted, #999);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 2px;
+}
+
+/* Status cell */
+.status-cell {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    margin-bottom: 12px;
+    gap: 6px;
 }
 
-.simple-watch-card .status-indicator {
+.status-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
+    flex-shrink: 0;
 }
 
-.simple-watch-card .status-indicator.status-ok {
-    background: #4caf50;
-}
-
-.simple-watch-card .status-indicator.status-changed {
-    background: #f44336;
-    animation: pulse 1.5s infinite;
-}
-
-.simple-watch-card .status-indicator.status-error {
-    background: #ff9800;
-}
-
-.simple-watch-card .status-indicator.status-paused {
-    background: #9e9e9e;
-}
+.status-dot.status-ok { background: #4caf50; }
+.status-dot.status-changed { background: #f44336; animation: pulse 1.5s infinite; }
+.status-dot.status-error { background: #ff9800; }
+.status-dot.status-paused { background: #9e9e9e; }
+.status-dot.status-soldout { background: #f44336; }
 
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
 }
 
-.simple-watch-card .card-actions {
-    display: flex;
-    gap: 8px;
-    border-top: 1px solid var(--color-border, #e0e0e0);
-    padding-top: 12px;
-    margin-top: auto;
-}
-
-.simple-watch-card .card-action-btn {
-    flex: 1;
-    padding: 6px 12px;
-    border: 1px solid var(--color-border, #e0e0e0);
-    border-radius: 4px;
-    background: transparent;
-    color: var(--color-text, #333);
+.status-text {
     font-size: 12px;
+    color: var(--color-text-muted, #666);
+}
+
+.pause-btn {
+    background: none;
+    border: none;
     cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
+    padding: 2px 4px;
+    font-size: 10px;
+    opacity: 0.4;
+    transition: opacity 0.2s;
+}
+
+.pause-btn:hover {
+    opacity: 1;
+}
+
+.pause-btn:focus {
+    opacity: 1;
+    outline: 2px solid var(--color-primary, #5c6bc0);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+.pause-btn:focus:not(:focus-visible) {
+    outline: none;
+}
+
+.pause-btn:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--color-primary, #5c6bc0);
+    outline-offset: 2px;
+}
+
+/* Watch words cell */
+.words-summary {
+    font-size: 12px;
+}
+
+.block-count {
+    color: #e91e63;
+}
+
+.trigger-count {
+    color: #2196f3;
+}
+
+.words-sep {
+    color: var(--color-text-muted, #999);
+    margin: 0 2px;
+}
+
+.no-words {
+    color: var(--color-text-muted, #999);
+    font-style: italic;
+}
+
+/* Interval cell */
+.interval-text {
+    font-size: 12px;
+}
+
+.interval-default {
+    color: var(--color-text-muted, #999);
+    font-style: italic;
+}
+
+/* Notify cell */
+.notify-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    font-size: 16px;
+    transition: transform 0.2s;
+}
+
+.notify-btn:hover {
+    transform: scale(1.2);
+}
+
+.notify-btn:focus {
+    outline: 2px solid var(--color-primary, #5c6bc0);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.notify-btn:focus:not(:focus-visible) {
+    outline: none;
+}
+
+.notify-btn:focus-visible {
+    outline: 2px solid var(--color-primary, #5c6bc0);
+    outline-offset: 2px;
+}
+
+.notify-muted {
+    opacity: 0.4;
+}
+
+/* Tags cell */
+.tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.db-tag-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.no-tags {
+    color: var(--color-text-muted, #999);
+}
+
+/* Actions cell */
+.action-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    background: var(--color-background-secondary, #f0f0f0);
+    color: var(--color-text-muted, #666);
     text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s;
 }
 
-.simple-watch-card .card-action-btn:hover {
-    background: var(--color-background-hover, #f5f5f5);
-}
-
-.simple-watch-card .card-action-btn.primary {
+.action-btn:hover {
     background: var(--color-primary, #5c6bc0);
     color: white;
+}
+
+.action-btn:focus {
+    outline: 2px solid var(--color-primary, #5c6bc0);
+    outline-offset: 2px;
+}
+
+.action-btn:focus:not(:focus-visible) {
+    outline: none;
+}
+
+.action-btn:focus-visible {
+    outline: 2px solid var(--color-primary, #5c6bc0);
+    outline-offset: 2px;
+    background: var(--color-primary, #5c6bc0);
+    color: white;
+}
+
+/* Editable cells */
+.editable-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 6px;
+    margin: -4px -6px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.editable-cell:hover {
+    background: var(--color-background-hover, rgba(0,0,0,0.05));
+}
+
+.editable-cell .edit-icon {
+    opacity: 0;
+    font-size: 11px;
+    color: var(--color-text-muted, #999);
+    transition: opacity 0.2s;
+}
+
+.editable-cell:hover .edit-icon {
+    opacity: 0.7;
+}
+
+.editable-cell:focus {
+    outline: 2px solid var(--color-primary, #5c6bc0);
+    outline-offset: 2px;
+}
+
+.editable-cell:focus:not(:focus-visible) {
+    outline: none;
+}
+
+.editable-cell:focus-visible {
+    outline: 2px solid var(--color-primary, #5c6bc0);
+    outline-offset: 2px;
+}
+
+.editable-cell:focus .edit-icon {
+    opacity: 0.7;
+}
+
+/* Inline editing states */
+.editable-cell.editing {
+    background: white;
+    box-shadow: 0 0 0 2px var(--color-primary, #5c6bc0);
+}
+
+.inline-input {
+    width: 100%;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 3px;
+    font-size: inherit;
+    font-family: inherit;
+    background: transparent;
+    outline: none;
+}
+
+.saving-indicator {
+    color: var(--color-primary, #5c6bc0);
+    font-size: 11px;
+}
+
+/* Edit popover */
+.edit-popover {
+    position: fixed;
+    z-index: 1000;
+    background: var(--color-background-card, #fff);
+    border: 1px solid var(--color-border, #e0e0e0);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    padding: 16px;
+    min-width: 280px;
+    max-width: 400px;
+}
+
+.edit-popover h4 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.edit-popover label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text-muted, #666);
+    margin-bottom: 4px;
+}
+
+.edit-popover textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--color-border, #e0e0e0);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+    resize: vertical;
+    min-height: 60px;
+    box-sizing: border-box;
+}
+
+.edit-popover textarea:focus {
+    outline: none;
     border-color: var(--color-primary, #5c6bc0);
 }
 
-.simple-watch-card .card-action-btn.primary:hover {
+.edit-popover .field-group {
+    margin-bottom: 12px;
+}
+
+.edit-popover .field-hint {
+    font-size: 10px;
+    color: var(--color-text-muted, #999);
+    margin-top: 4px;
+}
+
+.edit-popover .popover-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border, #e0e0e0);
+}
+
+.edit-popover .btn-cancel {
+    padding: 6px 12px;
+    border: 1px solid var(--color-border, #e0e0e0);
+    border-radius: 4px;
+    background: white;
+    color: var(--color-text, #333);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.edit-popover .btn-save {
+    padding: 6px 16px;
+    border: none;
+    border-radius: 4px;
+    background: var(--color-primary, #5c6bc0);
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.edit-popover .btn-cancel:hover {
+    background: var(--color-background-secondary, #f5f5f5);
+}
+
+.edit-popover .btn-save:hover {
     background: var(--color-primary-dark, #3f51b5);
+}
+
+/* Interval dropdown */
+.interval-dropdown {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--color-border, #e0e0e0);
+    border-radius: 4px;
+    font-size: 13px;
+    background: white;
+}
+
+/* Tags multiselect */
+.tags-checklist {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--color-border, #e0e0e0);
+    border-radius: 4px;
+    padding: 8px;
+}
+
+.tags-checklist label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    cursor: pointer;
+    font-weight: normal;
+}
+
+.tags-checklist label:hover {
+    background: var(--color-background-hover, #f5f5f5);
+}
+
+/* Toast notifications */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-size: 13px;
+    z-index: 2000;
+    animation: slideIn 0.3s ease;
+}
+
+.toast-success {
+    background: #4caf50;
+    color: white;
+}
+
+.toast-error {
+    background: #f44336;
+    color: white;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Success flash on save */
+.save-success {
+    animation: flashGreen 0.5s ease;
+}
+
+@keyframes flashGreen {
+    0%, 100% { background: transparent; }
+    50% { background: rgba(76, 175, 80, 0.2); }
+}
+
+/* Responsive - hide columns on smaller screens */
+@media (max-width: 1200px) {
+    .database-table .col-interval { display: none; }
+}
+
+@media (max-width: 1024px) {
+    .database-table .col-notify { display: none; }
+    .database-table .col-checked { display: none; }
+}
+
+@media (max-width: 768px) {
+    .database-table .col-tags { display: none; }
+    .database-table .col-words {
+        min-width: 80px;
+    }
+    .words-summary {
+        font-size: 11px;
+    }
+    /* WCAG 2.5.5: Increase touch target sizes on mobile */
+    .action-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
+    }
+    .pause-btn {
+        padding: 8px 12px;
+        min-width: 44px;
+        min-height: 44px;
+    }
+    .notify-btn {
+        padding: 10px;
+        min-width: 44px;
+        min-height: 44px;
+    }
+    .editable-cell {
+        padding: 8px 10px;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+    }
 }
 
 /* ==========================================================================
@@ -372,9 +815,80 @@ body.mode-simple .watch-words-section label {
    Dark Mode Overrides for Simple Mode
    ========================================================================== */
 
-[data-darkmode="true"] .simple-watch-card {
+[data-darkmode="true"] .database-table {
     background: var(--color-background-card-dark, #2d2d2d);
     border-color: var(--color-border-dark, #444);
+}
+
+[data-darkmode="true"] .database-table thead {
+    background: var(--color-background-secondary-dark, #383838);
+}
+
+[data-darkmode="true"] .database-table th {
+    color: var(--color-text-muted-dark, #aaa);
+    border-color: var(--color-border-dark, #444);
+}
+
+[data-darkmode="true"] .database-table td {
+    border-color: var(--color-border-dark, #333);
+}
+
+[data-darkmode="true"] .database-table tbody tr:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+[data-darkmode="true"] .title-text {
+    color: var(--color-text-dark, #eee);
+}
+
+[data-darkmode="true"] .url-preview {
+    color: var(--color-text-muted-dark, #888);
+}
+
+[data-darkmode="true"] .action-btn {
+    background: var(--color-background-secondary-dark, #444);
+    color: var(--color-text-muted-dark, #aaa);
+}
+
+[data-darkmode="true"] .action-btn:hover {
+    background: var(--color-primary, #5c6bc0);
+    color: white;
+}
+
+[data-darkmode="true"] .edit-popover {
+    background: var(--color-background-card-dark, #2d2d2d);
+    border-color: var(--color-border-dark, #444);
+}
+
+[data-darkmode="true"] .edit-popover textarea {
+    background: var(--color-background-secondary-dark, #383838);
+    border-color: var(--color-border-dark, #444);
+    color: var(--color-text-dark, #eee);
+}
+
+[data-darkmode="true"] .edit-popover .btn-cancel {
+    background: var(--color-background-secondary-dark, #383838);
+    border-color: var(--color-border-dark, #444);
+    color: var(--color-text-dark, #eee);
+}
+
+[data-darkmode="true"] .interval-dropdown {
+    background: var(--color-background-secondary-dark, #383838);
+    border-color: var(--color-border-dark, #444);
+    color: var(--color-text-dark, #eee);
+}
+
+[data-darkmode="true"] .tags-checklist {
+    background: var(--color-background-secondary-dark, #383838);
+    border-color: var(--color-border-dark, #444);
+}
+
+[data-darkmode="true"] .editable-cell:hover {
+    background: rgba(255,255,255,0.08);
+}
+
+[data-darkmode="true"] .editable-cell.editing {
+    background: var(--color-background-secondary-dark, #383838);
 }
 
 [data-darkmode="true"] .mode-simple-active {
@@ -405,8 +919,4 @@ body.mode-simple .watch-words-section label {
 [data-darkmode="true"] .simple-add-wrapper button {
     background: #fff;
     color: #3f51b5;
-}
-
-[data-darkmode="true"] .simple-watch-card .card-event-date {
-    background: rgba(92, 107, 192, 0.2);
 }
