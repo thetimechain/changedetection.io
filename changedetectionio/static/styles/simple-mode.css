@@ -1,0 +1,412 @@
+/**
+ * Simple Mode UI Styles
+ * Controls visibility and styling for Simple vs Advanced mode
+ */
+
+/* ==========================================================================
+   Mode Toggle Button
+   ========================================================================== */
+
+.mode-toggle {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+}
+
+.mode-indicator {
+    display: inline-block;
+}
+
+.mode-simple-active {
+    color: var(--color-text-accent, #5c6bc0);
+    background: var(--color-background-accent, rgba(92, 107, 192, 0.1));
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.mode-advanced-active {
+    color: var(--color-text-warning, #f57c00);
+    background: var(--color-background-warning, rgba(245, 124, 0, 0.1));
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.mode-toggle:hover .mode-indicator {
+    transform: scale(1.05);
+}
+
+/* ==========================================================================
+   Simple Mode Visibility Rules
+   ========================================================================== */
+
+/* Hide advanced-only elements when in Simple Mode */
+body.mode-simple .advanced-only {
+    display: none !important;
+}
+
+/* Hide simple-only elements when in Advanced Mode */
+body.mode-advanced .simple-only {
+    display: none !important;
+}
+
+/* ==========================================================================
+   Simple Mode - Hidden Menu Items
+   ========================================================================== */
+
+/* In Simple Mode, hide power-user menu items */
+body.mode-simple .menu-collapsible:has(a[href*="bulk_operations"]),
+body.mode-simple .menu-collapsible:has(a[href*="import"]) {
+    display: none !important;
+}
+
+/* ==========================================================================
+   Simple Mode - Watch Overview Modifications
+   ========================================================================== */
+
+/* Hide complex table columns in Simple Mode */
+body.mode-simple .watch-table th.advanced-only,
+body.mode-simple .watch-table td.advanced-only {
+    display: none !important;
+}
+
+/* Hide advanced quick-add options */
+body.mode-simple #quick-watch-processor-select {
+    display: none !important;
+}
+
+/* ==========================================================================
+   Simple Mode - Edit Form Modifications
+   ========================================================================== */
+
+/* Hide advanced tabs in Simple Mode */
+body.mode-simple .tab:has(a[href="#request"]),
+body.mode-simple .tab:has(a[href="#browser-steps"]),
+body.mode-simple .tab:has(a[href="#visualselector"]),
+body.mode-simple .tab:has(a[href="#conditions"]) {
+    display: none !important;
+}
+
+/* Hide advanced tab panes in Simple Mode */
+body.mode-simple #request,
+body.mode-simple #browser-steps,
+body.mode-simple #visualselector,
+body.mode-simple #conditions {
+    display: none !important;
+}
+
+/* Hide advanced fields within visible sections */
+body.mode-simple .field-advanced {
+    display: none !important;
+}
+
+/* ==========================================================================
+   Simple Mode - Card View (for future dashboard)
+   ========================================================================== */
+
+.simple-watch-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    padding: 16px 0;
+}
+
+.simple-watch-card {
+    background: var(--color-background-card, #fff);
+    border: 1px solid var(--color-border, #e0e0e0);
+    border-radius: 8px;
+    padding: 16px;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.simple-watch-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.simple-watch-card .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.simple-watch-card .card-favicon {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    object-fit: contain;
+    background: var(--color-background-muted, #f5f5f5);
+}
+
+.simple-watch-card .card-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--color-text, #333);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+
+.simple-watch-card .card-meta {
+    font-size: 12px;
+    color: var(--color-text-muted, #666);
+    margin-bottom: 12px;
+}
+
+.simple-watch-card .card-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    margin-bottom: 12px;
+}
+
+.simple-watch-card .status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.simple-watch-card .status-indicator.status-ok {
+    background: #4caf50;
+}
+
+.simple-watch-card .status-indicator.status-changed {
+    background: #f44336;
+    animation: pulse 1.5s infinite;
+}
+
+.simple-watch-card .status-indicator.status-error {
+    background: #ff9800;
+}
+
+.simple-watch-card .status-indicator.status-paused {
+    background: #9e9e9e;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.simple-watch-card .card-actions {
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid var(--color-border, #e0e0e0);
+    padding-top: 12px;
+    margin-top: auto;
+}
+
+.simple-watch-card .card-action-btn {
+    flex: 1;
+    padding: 6px 12px;
+    border: 1px solid var(--color-border, #e0e0e0);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--color-text, #333);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    text-decoration: none;
+}
+
+.simple-watch-card .card-action-btn:hover {
+    background: var(--color-background-hover, #f5f5f5);
+}
+
+.simple-watch-card .card-action-btn.primary {
+    background: var(--color-primary, #5c6bc0);
+    color: white;
+    border-color: var(--color-primary, #5c6bc0);
+}
+
+.simple-watch-card .card-action-btn.primary:hover {
+    background: var(--color-primary-dark, #3f51b5);
+}
+
+/* ==========================================================================
+   Simple Mode - Quick Add Form
+   ========================================================================== */
+
+#form-quick-watch-add-simple {
+    background: var(--color-primary, #5c6bc0);
+}
+
+#form-quick-watch-add-simple legend {
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.simple-add-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.simple-add-wrapper input[type="url"],
+.simple-add-wrapper input[type="text"] {
+    flex: 1;
+    min-width: 200px;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+}
+
+.simple-add-tag {
+    flex: 0 0 auto;
+}
+
+.simple-add-tag input {
+    padding: 12px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    width: 150px;
+}
+
+.simple-add-wrapper button {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    background: white;
+    color: var(--color-primary, #5c6bc0);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.simple-add-wrapper button:hover {
+    background: #f0f0f0;
+    transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Simple Mode - Empty State
+   ========================================================================== */
+
+.simple-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--color-text-muted, #666);
+    background: var(--color-background-card, #fff);
+    border: 2px dashed var(--color-border, #e0e0e0);
+    border-radius: 12px;
+}
+
+.simple-empty-state p {
+    font-size: 16px;
+    margin: 0;
+}
+
+/* ==========================================================================
+   Simple Mode - Card Event Date
+   ========================================================================== */
+
+.simple-watch-card .card-event-date {
+    font-size: 11px;
+    color: var(--color-text-accent, #5c6bc0);
+    background: var(--color-background-accent, rgba(92, 107, 192, 0.1));
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    display: inline-block;
+}
+
+/* ==========================================================================
+   Simple Mode - Card Status Variants
+   ========================================================================== */
+
+.simple-watch-card.has-unviewed {
+    border-color: #f44336;
+    box-shadow: 0 0 0 2px rgba(244, 67, 54, 0.2);
+}
+
+.simple-watch-card.has-error {
+    border-color: #ff9800;
+}
+
+.simple-watch-card.paused {
+    opacity: 0.7;
+}
+
+.simple-watch-card.in-stock .card-status {
+    color: #4caf50;
+}
+
+.simple-watch-card.not-in-stock .card-status {
+    color: #f44336;
+}
+
+/* ==========================================================================
+   Simple Mode - Word Monitoring Highlight
+   ========================================================================== */
+
+/* Make block_words and trigger_words fields more prominent in Simple Mode */
+body.mode-simple .watch-words-section {
+    background: var(--color-background-highlight, #f8f9ff);
+    border: 2px solid var(--color-accent, #5c6bc0);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 16px 0;
+}
+
+body.mode-simple .watch-words-section label {
+    font-weight: 600;
+    color: var(--color-accent, #5c6bc0);
+}
+
+/* ==========================================================================
+   Dark Mode Overrides for Simple Mode
+   ========================================================================== */
+
+[data-darkmode="true"] .simple-watch-card {
+    background: var(--color-background-card-dark, #2d2d2d);
+    border-color: var(--color-border-dark, #444);
+}
+
+[data-darkmode="true"] .mode-simple-active {
+    background: rgba(92, 107, 192, 0.2);
+}
+
+[data-darkmode="true"] .mode-advanced-active {
+    background: rgba(245, 124, 0, 0.2);
+}
+
+[data-darkmode="true"] .simple-empty-state {
+    background: var(--color-background-card-dark, #2d2d2d);
+    border-color: var(--color-border-dark, #444);
+    color: var(--color-text-muted-dark, #aaa);
+}
+
+[data-darkmode="true"] #form-quick-watch-add-simple {
+    background: #3f51b5;
+}
+
+[data-darkmode="true"] .simple-add-wrapper input[type="url"],
+[data-darkmode="true"] .simple-add-wrapper input[type="text"],
+[data-darkmode="true"] .simple-add-tag input {
+    background: #2d2d2d;
+    color: #fff;
+}
+
+[data-darkmode="true"] .simple-add-wrapper button {
+    background: #fff;
+    color: #3f51b5;
+}
+
+[data-darkmode="true"] .simple-watch-card .card-event-date {
+    background: rgba(92, 107, 192, 0.2);
+}

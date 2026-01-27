@@ -284,12 +284,15 @@ def main():
 
     @app.context_processor
     def inject_template_globals():
+        # Get UI mode from session, default to 'simple' for new users
+        ui_mode = session.get('ui_mode', 'simple')
         return dict(right_sticky="v{}".format(datastore.data['version_tag']),
                     new_version_available=app.config['NEW_VERSION_AVAILABLE'],
                     has_password=datastore.data['settings']['application']['password'] != False,
                     socket_io_enabled=datastore.data['settings']['application']['ui'].get('socket_io_enabled', True),
                     all_paused=datastore.data['settings']['application'].get('all_paused', False),
-                    all_muted=datastore.data['settings']['application'].get('all_muted', False)
+                    all_muted=datastore.data['settings']['application'].get('all_muted', False),
+                    ui_mode=ui_mode
                     )
 
     # Monitored websites will not receive a Referer header when a user clicks on an outgoing link.

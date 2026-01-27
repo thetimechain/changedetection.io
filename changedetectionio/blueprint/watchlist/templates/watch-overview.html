@@ -50,7 +50,30 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
 {%- endif -%}
 {%- endfor -%}
 </style>
-<div class="box" id="form-quick-watch-add">
+{# ========================================================================
+   SIMPLE MODE: Simplified Quick Add Form
+   ======================================================================== #}
+<div class="box simple-only" id="form-quick-watch-add-simple">
+    <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add', tag=active_tag_uuid) }}" method="POST" id="new-watch-form-simple">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
+        <input type="hidden" name="processor" value="text_json_diff">
+        <fieldset>
+            <legend>{{ _('Watch a new page') }}</legend>
+            <div class="simple-add-wrapper">
+                {{ render_nolabel_field(form.url, placeholder="https://...", required=true) }}
+                <div class="simple-add-tag">
+                    {{ render_nolabel_field(form.tags, value=active_tag.title if active_tag_uuid else '', placeholder=_("Group (optional)")) }}
+                </div>
+                {{ render_nolabel_field(form.edit_and_watch_submit_button, title=_("Add & Configure") ) }}
+            </div>
+        </fieldset>
+    </form>
+</div>
+
+{# ========================================================================
+   ADVANCED MODE: Full Quick Add Form
+   ======================================================================== #}
+<div class="box advanced-only" id="form-quick-watch-add">
 
     <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add', tag=active_tag_uuid) }}" method="POST" id="new-watch-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
@@ -77,7 +100,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
     <form class="pure-form" action="{{ url_for('ui.form_watch_list_checkbox_operations') }}" method="POST" id="watch-list-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
     <input type="hidden" id="op_extradata" name="op_extradata" value="" >
-    <div id="checkbox-operations">
+    <div id="checkbox-operations" class="advanced-only">
         <button class="pure-button button-secondary button-xsmall"  name="op" value="pause"><i data-feather="pause" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Pause') }}</button>
         <button class="pure-button button-secondary button-xsmall"  name="op" value="unpause"><i data-feather="play" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('UnPause') }}</button>
         <button class="pure-button button-secondary button-xsmall"  name="op" value="mute"><i data-feather="volume-x" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Mute') }}</button>
@@ -112,7 +135,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
     {%- if search_q -%}<div id="search-result-info">{{ _('Searching') }} "<strong><i>{{search_q}}</i></strong>"</div>{%- endif -%}
 
     <!-- US-021: Advanced Filter Panel -->
-    <div id="filter-panel" class="filter-panel">
+    <div id="filter-panel" class="filter-panel advanced-only">
         <button type="button" id="filter-toggle" class="pure-button button-small filter-toggle">
             <i data-feather="filter" style="width: 14px; height: 14px; margin-right: 4px;"></i>{{ _('Filters') }}
             {%- if filter_tags or stock_status != 'all' or filter_form.date_from.data or filter_form.date_to.data -%}
@@ -211,6 +234,106 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
     {%- endfor -%}
     </div>
 
+    {# ========================================================================
+       SIMPLE MODE: Card-based Watch Grid
+       ======================================================================== #}
+    {%- set ui_settings = datastore.data['settings']['application']['ui'] -%}
+    <div class="simple-watch-cards simple-only">
+        {%- if not watches|length -%}
+        <div class="simple-empty-state">
+            <p>{{ _('No watches yet. Add a URL above to start monitoring pages.') }}</p>
+        </div>
+        {%- endif -%}
+
+        {%- for watch in (watches|sort(attribute=sort_attribute or 'last_changed', reverse=(sort_order or 'asc') == 'asc'))|pagination_slice(skip=pagination.skip) -%}
+            {%- set favicon = watch.get_favicon_filename() -%}
+            {%- set has_error = watch.compile_error_texts()|length > 2 -%}
+            {%- set is_paused = watch.paused is defined and watch.paused != False -%}
+            {%- set has_unviewed = watch.has_unviewed -%}
+            {%- set in_stock = watch.has_restock_info and watch['restock']['in_stock'] -%}
+            {%- set not_in_stock = watch.has_restock_info and not watch['restock']['in_stock'] -%}
+            {%- set system_use_url_watchlist = ui_settings.get('use_page_title_in_list') -%}
+
+            {%- set card_classes = [
+                'has-error' if has_error else '',
+                'paused' if is_paused else '',
+                'has-unviewed' if has_unviewed else '',
+                'in-stock' if in_stock else '',
+                'not-in-stock' if not_in_stock else '',
+            ] -%}
+
+        <div class="simple-watch-card {{ card_classes | reject('equalto', '') | join(' ') }}" data-watch-uuid="{{ watch.uuid }}">
+            <div class="card-header">
+                {% if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] %}
+                <img alt="" class="card-favicon" loading="lazy"
+                    {% if favicon %}src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}"
+                    {% else %}src='data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"%3E%3Ccircle cx="16" cy="16" r="14" stroke="%23e1e1e1" stroke-width="2" fill="none" opacity="0.5"/%3E%3C/svg%3E'{% endif %}>
+                {% endif %}
+                <span class="card-title" title="{{ watch.link }}">
+                    {% if system_use_url_watchlist or watch.get('use_page_title_in_list') %}
+                        {{ watch.label }}
+                    {% else %}
+                        {{ watch.get('title') or watch.link|truncate(50) }}
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="card-status">
+                {%- if has_error -%}
+                <span class="status-indicator status-error" title="{{ _('Error') }}"></span>
+                <span>{{ _('Error') }}</span>
+                {%- elif is_paused -%}
+                <span class="status-indicator status-paused" title="{{ _('Paused') }}"></span>
+                <span>{{ _('Paused') }}</span>
+                {%- elif has_unviewed -%}
+                <span class="status-indicator status-changed" title="{{ _('Changed!') }}"></span>
+                <span>{{ _('Changed!') }}</span>
+                {%- elif not_in_stock -%}
+                <span class="status-indicator status-error" title="{{ _('Sold Out') }}"></span>
+                <span>{{ _('Sold Out') }}</span>
+                {%- elif in_stock -%}
+                <span class="status-indicator status-ok" title="{{ _('Available') }}"></span>
+                <span>{{ _('Available') }}</span>
+                {%- else -%}
+                <span class="status-indicator status-ok" title="{{ _('Monitoring') }}"></span>
+                <span>{{ _('Monitoring') }}</span>
+                {%- endif -%}
+            </div>
+
+            <div class="card-meta">
+                {%- if watch.last_checked > 0 -%}
+                {{ _('Checked') }}: {{watch|format_last_checked_time|safe}}
+                {%- else -%}
+                {{ _('Not yet checked') }}
+                {%- endif -%}
+            </div>
+
+            {%- if watch.get('event_date') -%}
+            <div class="card-event-date">
+                {{ _('Event') }}: {{ watch.get('event_date') }}{% if watch.get('event_time') %} {{ watch.get('event_time') }}{% endif %}
+            </div>
+            {%- endif -%}
+
+            {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
+            <span class="watch-tag-list tag-{{ watch_tag.title|sanitize_tag_class }}">{{ watch_tag.title }}</span>
+            {%- endfor -%}
+
+            <div class="card-actions">
+                <a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}#text-options" class="card-action-btn primary" title="{{ _('Configure words to monitor') }}">{{ _('Words') }}</a>
+                {%- if watch.history_n >= 2 -%}
+                <a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=watch.uuid)}}" class="card-action-btn" title="{{ _('View changes') }}">{{ _('Changes') }}</a>
+                {%- else -%}
+                <a href="{{ url_for('ui.ui_preview.preview_page', uuid=watch.uuid)}}" class="card-action-btn" title="{{ _('Preview content') }}">{{ _('Preview') }}</a>
+                {%- endif -%}
+                <a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}" class="card-action-btn" title="{{ _('Edit watch settings') }}">{{ _('Edit') }}</a>
+            </div>
+        </div>
+        {%- endfor -%}
+    </div>
+
+    {# ========================================================================
+       ADVANCED MODE: Table-based Watch List
+       ======================================================================== #}
     {%- set sort_order = sort_order or 'asc' -%}
     {%- set sort_attribute = sort_attribute or 'last_changed'  -%}
     {%- set pagination_page = request.args.get('page', 0) -%}
@@ -223,6 +346,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
     {%- set wrapper_classes = [
         'has-unread-changes' if unread_changes_count else '',
         'has-error' if errored_count else '',
+        'advanced-only',
     ] -%}
     <div id="watch-table-wrapper" class="{{ wrapper_classes | reject('equalto', '') | join(' ') }}">
         {%- set table_classes = [

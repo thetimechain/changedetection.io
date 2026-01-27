@@ -57,6 +57,17 @@
     </li>
 {% endif %}
     <li class="pure-menu-item menu-collapsible" id="inline-menu-extras-group">
+        {# UI Mode Toggle - Simple/Advanced #}
+        <a href="{{ url_for('ui.ui_views.set_ui_mode', mode='advanced' if ui_mode == 'simple' else 'simple') }}"
+           class="toggle-button mode-toggle"
+           title="{{ _('Switch to Advanced Mode') if ui_mode == 'simple' else _('Switch to Simple Mode') }}">
+            <span class="visually-hidden">{{ _('Toggle UI mode') }}</span>
+            {% if ui_mode == 'simple' %}
+            <span class="mode-indicator mode-simple-active">Simple</span>
+            {% else %}
+            <span class="mode-indicator mode-advanced-active">Pro</span>
+            {% endif %}
+        </a>
         <button class="toggle-button toggle-light-mode " type="button" title="{{ _('Toggle Light/Dark Mode') }}">
             <span class="visually-hidden">{{ _('Toggle light/dark mode') }}</span>
             <span class="icon-light">

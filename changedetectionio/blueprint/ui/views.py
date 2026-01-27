@@ -1,4 +1,4 @@
-from flask import Blueprint, request, redirect, url_for, flash
+from flask import Blueprint, request, redirect, url_for, flash, session
 from flask_babel import gettext
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
@@ -7,6 +7,16 @@ from changedetectionio import worker_handler
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData, watch_check_update):
     views_blueprint = Blueprint('ui_views', __name__, template_folder="../ui/templates")
+
+    @views_blueprint.route("/ui/mode/<mode>")
+    @login_optionally_required
+    def set_ui_mode(mode):
+        """Toggle between simple and advanced UI modes."""
+        if mode in ('simple', 'advanced'):
+            session['ui_mode'] = mode
+            session.permanent = True  # Persist across browser sessions
+        # Redirect back to referring page or index
+        return redirect(request.referrer or url_for('watchlist.index'))
 
     @views_blueprint.route("/form/add/quickwatch", methods=['POST'])
     @login_optionally_required
