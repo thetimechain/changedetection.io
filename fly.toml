@@ -8,6 +8,10 @@ primary_region = 'ord'
 
 [build]
 
+[mounts]
+  source = 'ticketwatch_data'
+  destination = '/datastore'
+
 [http_service]
   internal_port = 8080
   force_https = true
